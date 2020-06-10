@@ -1,0 +1,58 @@
+
+MariaDB [insectenkweek]> create table Krat(
+KratID int(8) auto_increment primary key unique,
+KwekerID int(6),
+QR_code int(12) unique,
+Insectensoort varchar(20) not null,
+Startddatum date not null,
+Einddatum date not null,
+foreign key (KwekerID) references Kweker(KwekerID));
+
+ 
+MariaDB [insectenkweek]> create table Meetwaardes(
+Datum_tijd datetime primary key,
+KratID int(8),
+Temperatuur float not null,
+Luchtvochtigheid float not null,
+CO2 float not null,
+Metabolisme float not null, 
+foreign key (KratID) references Krat(KratID));
+
+MariaDB [insectenkweek]> create table Kweker(
+KwekerID int(6) primary key unique,
+Naam varchar(15) not null,
+Postcode char(6) not null,
+Huisnummer varchar(4) not null,
+Email varchar(20) unique,
+Telefoonnumer int(10) not null);
+
+MariaDB [insectenkweek]> create table Transporteur(
+TransporteurID int(6) auto_increment unique,
+KratID int(8),
+Naam varchar(15) not null,
+Postcode char(6) not null,
+Huisnummer varchar(4) not null,
+Email varchar(20) unique,
+Telefoonnumer int(10) not null,
+foreign key (KratID) references Krat(KratID));
+
+MariaDB [insectenkweek]> create table Customer(
+CustomerID int(6) auto_increment primary key unique,
+KratID int(8),
+Naam varchar(15) not null,
+Postcode char(6) not null,
+Huisnummer varchar(4) not null,
+Email varchar(20) unique,
+Telefoonnumer int(10) not null,
+foreign key (KratID) references Krat(KratID));
+
+MariaDB [insectenkweek]> Create table Contracten(
+KwekerID int(6),
+Contractnummer int(8) unique,
+Type varchar(10) not null,
+Startdatum date not null,
+Einddatum date not null,
+Prijseenheid float not null,
+Prijs float not null,
+foreign key (KwekerID) references Kweker(KwekerID));
+(YouTube, -) (A2 Hosting, -) (MySQL, -).	 
