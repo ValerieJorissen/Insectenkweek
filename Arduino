@@ -1,0 +1,139 @@
+
+////Combination of code from Adafruit Light and Temp logger:
+//https://github.com/adafruit/Light-and-Temp-logger
+//RTClib example and DHT11 example found here: 
+//https://learn.adafruit.com/dht/overview
+// Grove - Gas Sensor(O2) test code
+// NDIR CO2 sensor  heeft een libary nodig hieronder te zien.
+//https://github.com/PaulStoffregen/SoftwareSerial.git
+//RTClib libary voor de tijd
+
+
+//Hieronder staan de libraries die include moeten worden om de sensoren af te lezen
+#include <SD.h>
+#include <Wire.h>
+#include "RTClib.h"
+#include "DHT.h"
+#include <SoftwareSerial.h>
+SoftwareSerial s_serial(2, 3);      // TX, RX
+#define sensor s_serial
+
+
+//Variabelen staan hieronder incl de pin waar de sensor aan vast zit
+File logfile;
+String filename;
+String SensorType;
+int SensorPort;
+DHT dht2 (2, DHT11);
+DHT dht3 (3, DHT11);
+DHT dht4 (4, DHT11);
+const float VRefer = 3.3;       // voltage of adc reference
+const int pinAdc   = A3;
+
+unsigned char dataRevice[9];
+int temperature;
+int D8;
+
+RTC_DS1307 RTC; // define the Real Time Clock object
+// for the data logging shield, use digital pin 10 for the SD cs line
+const int chipSelect = 10;
+
+//Hier begint de uitleg over hoe het programma wordt opgestart
+void setup(void)
+{
+  Serial.begin(9600);
+  dht2.begin();
+  Serial.println("Grove - Gas Sensor Test Code...");
+  //dht3.begin();
+  //dht4.begin();
+  RTC.begin();
+    Serial.println("sensor s_serial");
+
+
+  if (! RTC.isrunning())
+  {
+    Serial.println("RTC is NOT running!");
+    //sets the RTC to the date & time this sketch was compiled
+    RTC.adjust(DateTime(__DATE__, __TIME__));
+  }
+
+
+// initialize the SD card
+  Serial.print("Initializing SD card...");
+  // make sure that the default chip select pin is set to
+  // output, even if you don't use it:
+  pinMode(10, OUTPUT);
+  
+  // see if the card is present and can be initialized:
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Card failed, or not present");
+    // don't do anything more:
+    return;
+  }
+  Serial.println("card initialized.");
+  
+  // create a new file
+  char Filenaam[] = "LOGGER00.CSV";
+  for (uint8_t i = 0; i < 100; i++) {
+    Filenaam[6] = i/10 + '0';
+    Filenaam[7] = i%10 + '0';
+    if (! SD.exists(Filenaam)) {
+      // only open a new file if it doesn't exist
+      filename = Filenaam;
+      break;  // leave the loop!
+    }
+  }
+logfile = SD.open(filename, FILE_WRITE);
+logfile.println ("date, time, type, port, value"); 
+logfile.close();
+  
+}
+
+// Void loop is hoe de data getest wordt
+void loop()
+{
+
+  SensorPort = 2;
+  SensorType = "Hum";
+  LogValue (SensorType, SensorPort, String(dht2.readHumidity(),DEC));
+  SensorType = "Temp";
+  LogValue (SensorType, SensorPort, String(dht2.readTemperature(),DEC));
+
+  SensorPort = A3;
+  SensorType = "oxygen";
+  LogValue (SensorType, SensorPort, String(dht2.readHumidity(),DEC));
+
+  SensorPort = D8;
+  SensorType = "Carbondioxide";
+  LogValue (SensorType, SensorPort, String(dht2.readHumidity(),DEC));
+
+  SensorPort = 3;
+  SensorType = "Hum";
+  LogValue (SensorType, SensorPort, String(dht3.readHumidity(),DEC));
+  SensorType = "Temp";
+  LogValue (SensorType, SensorPort, String(dht3.readTemperature(),DEC));
+
+
+  SensorPort = 4;
+  SensorType = "Hum";
+  LogValue (SensorType, SensorPort, String(dht4.readHumidity(),DEC));
+  SensorType = "Temp";
+  LogValue (SensorType, SensorPort, String(dht4.readTemperature(),DEC));
+
+  delay(5000); //Delay 5 sec.
+    
+}
+
+// Void logfile beschrijft hoe de data wordt opgeslagen
+void LogValue(String SensorType, int SensorPort, String SensorValue) {
+
+DateTime now = RTC.now();
+Serial.println(SensorType + ", " + SensorPort + ", " + SensorValue);
+logfile = SD.open(filename, FILE_WRITE);
+logfile.print(String(now.year(), DEC) + '/' + String(now.month(), DEC) + '/' + String(now.day(), DEC));
+logfile.print(", ");
+logfile.print(String(now.hour(), DEC) + ':' + String(now.minute(), DEC) + ':' + String(now.second(), DEC));
+logfile.print(", ");    
+logfile.println(SensorType + ", " + SensorPort + ", " + SensorValue);
+logfile.close();
+}
